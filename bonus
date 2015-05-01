@@ -1,0 +1,1019 @@
+/* This really awful version of Battleship was created by Emily McMillon. She hopes you enjoy playing it.
+ * 
+ * The program has been set up so that you can alter the size of the play area, the number of ships on
+ * each side, and their respective lengths, names, and character sayings on board. If you want to add or
+ * take away new ships, you will need to do that manually as seen near the beginning of the program.
+ * Changing the size of the field is as simple as changing the initial variables. You can also change
+ * the number of panes to 1 to have a more traditional battleship game.
+ * 
+ * One note, if you change the field size to be very small, the randomizing ship placement step may
+ * not work properly, because the ships won't all fit. Keep the play field decently sized.
+ * 
+ * To change sayings, there are three methods near the bottom of the program "onHit" "onSunk" and
+ * "onRandom." If the number of ships is changed, these will need to be altered for the program to run
+ * properly.
+ * 
+ * I hope you enjoy it!                                                                                 */
+
+
+import java.util.Random;
+import java.util.Scanner;
+
+public class Airship {
+	
+	public static void main(String[] args) {
+		int numPlane = 3; int numRow = 5; int numColumn = 5; int numAllyShips = 5; int numEnemyShips = 5;
+		int[][][][] allyGrid = new int[numPlane][numRow][numColumn][3];
+		int[][][][] enemyGrid = new int[numPlane][numRow][numColumn][2];
+		int[][] allyShips = new int[numAllyShips][];
+		int[][] enemyShips = new int[numEnemyShips][];
+		String[] allyShipNames = new String[numAllyShips];
+		String[] enemyShipNames = new String[numEnemyShips];
+		int allyShipsSunk = 0; int enemyShipsSunk = 0;
+		int plane = 0; int row = 0; int column = 0; int direction = 0;
+		char charInput = 'y';
+		
+		
+		// ship information
+		allyShipNames[0] = "Lunar Whale";
+		allyShips[0] = new int[4]; // Lunar Whale is 4 units long
+		allyShipNames[1] = "Blackjack";
+		allyShips[1] = new int[3]; // Blackjack is 3 units long
+		allyShipNames[2] = "Hilda Garde III";
+		allyShips[2] = new int[3]; // Hilda Garde III is 3 units long
+		allyShipNames[3] = "Celsius";
+		allyShips[3] = new int[3]; // Celsius is 3 units long
+		allyShipNames[4] = "Cid\'s Airship";
+		allyShips[4] = new int[2]; // Cid's Airship is 2 units long
+		
+		enemyShipNames[0] = "Sky Fortress Bahamut";
+		enemyShips[0] = new int[3]; // Sky Fortress Bahamut is 3 units long
+		enemyShipNames[1] = "Dreadnaught";
+		enemyShips[1] = new int[3]; // Dreadnaught is 3 units long
+		enemyShipNames[2] = "Invincible";
+		enemyShips[2] = new int[3]; // Invincible is 3 units long
+		enemyShipNames[3] = "Red Rose";
+		enemyShips[3] = new int[2]; // Red Rose is 3 units long
+		enemyShipNames[4] = "Galbadia Garden";
+		enemyShips[4] = new int[4]; // Galbadia Garden is 4 units long
+		
+		// initialize arrays
+		initialize4DIntArray(allyGrid, 0);
+		initialize4DIntArray(enemyGrid, 0);
+		initialize2DIntArray(allyShips, 0);
+		initialize2DIntArray(enemyShips, 0);
+		
+		// welcome messages
+		System.out.println("Welcome to Final Fantasy AirBattleShip!\n");
+		System.out.println("In this game, you and an AI opponent will control airships from the Final Fantasy series.");
+		System.out.println("Whoever sinks all their opponent's airships first wins.\n");
+		System.out.println("Some game notes:");
+		System.out.println("1. This is a three-dimensional version of battleship. You will need to specify three");
+		System.out.println("   coordinates when attacking or manually placing ships. Coordinate inputs require the");
+		System.out.println("   input format \'plane row column\', without single quotes, and with either spaces or");
+		System.out.println("   returns between each number.");
+		System.out.println("2. The plane is the number displayed to the very left of the play area. Notice that they");
+		System.out.println("   are lowest at the bottom, because logic.");
+		System.out.println("3. If you call the same location twice, the program will not correct your mistake,");
+		System.out.println("   so pay attention!");
+		System.out.println("4. Ships can be placed only horizontally or vertically -- no diagonals, and no spanning");
+		System.out.println("   multiple 3D planes, because airships don't fly like that.");
+		System.out.println("5. The enemy AI has been programmed to be smarter than random, but not so smart that you");
+		System.out.println("   shouldn't be able to beat it.");
+		System.out.println("6. You are attacking the grid on the left, with \'Enemy\' at the top.");
+		System.out.println("\nSome creator notes:");
+		System.out.println("1. I know I got most of the bugs out, but the computer AI MIGHT freeze up on you.");
+		System.out.println("   If it happens, just restart the game");
+		System.out.println("2. If you would like to change the play size, ship sizes, or number of ships, see the");
+		System.out.println("   comments in the program.");
+		System.out.println("3. Final Fantasy IX is overrepresented, because it is awesome.\n");
+		System.out.println("Have fun!\n");
+		
+		
+		// begin ship placement
+		
+		System.out.println("Your fleet consists of:");
+		System.out.printf("%3s%25s%7s\n", "#", "Ship Name", "Length");
+		for (int i = 0; i < allyShips.length; i++) {
+			System.out.printf("%3d%25s%7d\n", i + 1, allyShipNames[i], allyShips[i].length);
+		}
+		
+		System.out.println("\nYour enemy's fleet consists of:");
+		System.out.printf("%3s%25s%7s\n", "#", "Ship Name", "Length");
+		for (int i = 0; i < enemyShips.length; i++) {
+			System.out.printf("%3d%25s%7d\n", i + 1, enemyShipNames[i], enemyShips[i].length);
+		}
+		
+		Scanner input = new Scanner(System.in);
+		
+		System.out.print("\nWould you like to randomize ship placement? (Y/N): ");
+		do {
+			charInput = input.next().charAt(0);
+			
+			// check that input is valid
+			if (charInput != 'Y' && charInput != 'N' && charInput != 'y' && charInput != 'n') {
+				System.out.println();
+				System.out.print("Invalid input. Please enter Y or N: ");
+				System.out.println();
+			}
+			else {
+				break;
+			}
+		} while (true);
+		
+		System.out.println();
+		
+		// randomize ship placement
+		if (charInput == 'y' || charInput == 'Y') {
+			
+			do {
+				for (int i = 0; i < numAllyShips; i++) {
+					randomPlaceShip(allyGrid, i + 1, allyShips[i].length);
+				}
+				printGrid(allyGrid);
+				System.out.print("Would you like to keep these locations? (Y/N): ");
+				
+				do {
+					charInput = input.next().charAt(0);
+					
+					// check that input is valid
+					if (charInput != 'Y' && charInput != 'N' && charInput != 'y' && charInput != 'n') {
+						System.out.println();
+						System.out.print("Invalid input. Please enter Y or N: ");
+						System.out.println();
+					}
+					else {
+						break;
+					}
+				} while (true);
+				
+				System.out.println();
+				
+				if (charInput == 'Y' || charInput == 'y') {
+					break;
+					}
+				else {
+					initialize4DIntArray(allyGrid, 0);
+					continue;
+				}
+				
+			} while (true);
+			
+		}
+		// manually place ships
+		else {
+			for (int i = 0; i < allyShips.length; i++) {
+				
+				printGrid(allyGrid);
+				System.out.println("Where would you like to place " + allyShipNames[i] +", which is " + allyShips[i].length + " units long?");
+				
+				do {
+					System.out.print("Enter the coordinates as \'altitude row column\': ");
+					if (!input.hasNextInt()) {
+						System.out.println("That is not a valid input.");
+						input.next();
+						continue;
+					}
+					plane = input.nextInt() - 1;
+					if (!input.hasNextInt()) {
+						System.out.println("That is not a valid input.");
+						input.next();
+						continue;
+					}
+					row = input.nextInt() - 1;
+					if (!input.hasNextInt()) {
+						System.out.println("That is not a valid input.");
+						input.next();
+						continue;
+					}
+					column = input.nextInt() - 1;
+					
+					if (plane < 0 || row < 0 || column < 0 || plane > (numPlane - 1) || row > (numRow - 1) || column > (numColumn - 1)) {
+						System.out.println("Those are not valid coordinates.");
+						continue;
+					}
+					
+					if (checkShip(plane, row, column, allyGrid) == false) {
+						System.out.println("There is already a ship there!");
+						continue;
+					}
+					
+					System.out.println("What direction would you like to place " + allyShipNames[i] + "?");
+					
+					do {
+						System.out.print("1 is up, 2 is right, 3 is down, 4 is left, or enter 0 to choose new coordinates: ");
+						if (!input.hasNextInt()) {
+							System.out.println("That is not a valid input.");
+							input.next();
+							continue;
+						}
+						direction = input.nextInt();
+						
+						if (direction == 0) { break; }
+						if (direction > 4 || direction < 0) {
+							System.out.println("That is not a valid direction.");
+							continue;
+						}
+						else {
+							if (checkDirection(plane, row, column, allyGrid, direction, allyShips[i].length) == false) {
+								System.out.println("The ship will not fit here. Enter a new direction.");
+								continue;
+							}
+							else {
+								placeShip(plane, row, column, allyGrid, direction, i + 1, allyShips[i].length);
+								System.out.println("You have placed " + allyShipNames[i] + " at " + plane + ", " + row + ", " + column + ".");
+								break;
+							}
+						}
+					} while (true);
+					
+					if (direction == 0) { continue; }
+					if (direction != 0) { break; }
+					
+				} while (true);
+
+			}
+		}
+		
+		// place enemy ships
+		// (so much simpler than ally ships!)
+		for (int i = 0; i < numEnemyShips; i++) {
+			randomPlaceShip(enemyGrid, i + 1, enemyShips[i].length);
+		}
+		
+		// initialize grid with numbers 1 through magnitude of grid
+		// used to prevent excessive random number generation
+		int count = 1;
+		for (int i = 0; i < enemyGrid.length; i++) {
+			for (int j = 0; j < enemyGrid[i].length; j++) {
+				for (int k = 0; k < enemyGrid[i][j].length; k++) {
+					allyGrid[i][j][k][2] = count;
+					count++;
+				}
+			}
+		}
+		
+		// game variables
+		int turn = 0;
+		int allyStatus = 0;
+		int enemyStatus = 0;
+		int enemyGuess = 0;
+		int guessPlane = 0;
+		int guessRow = 0;
+		int guessColumn = 0;
+		int hit = 0;
+		int miss = 0;
+		int directionSwitch = 0;
+		int enemyDirection = 0;
+		int[] hit0 = new int[3];
+		int[] hit1 = new int[3];
+		int[] guessDirection = new int[5];
+		
+		// initialize arrays
+		initialize1DIntArray(hit0, 0);
+		initialize1DIntArray(hit1, 0);
+		initialize1DIntArray(guessDirection, 0);
+		
+		printGrids(enemyGrid, allyGrid);
+		
+		// begin the game
+		do {
+			allyStatus = 0;
+			enemyStatus = 0;
+			enemyGuess = 0;		
+
+			// begin ally turn
+			do {
+				
+				System.out.print("Enter the coordinates you would like to attack as \'altitude row column\': ");
+				
+				// input validation
+				if (!input.hasNextInt()) {
+					System.out.println("That is not a valid input.");
+					input.next();
+					continue;
+				}
+				plane = input.nextInt() - 1;
+				if (!input.hasNextInt()) {
+					System.out.println("That is not a valid input.");
+					input.next();
+					continue;
+				}
+				row = input.nextInt() - 1;
+				if (!input.hasNextInt()) {
+					System.out.println("That is not a valid input.");
+					input.next();
+					continue;
+				}
+				column = input.nextInt() - 1;
+				
+				if (plane < 0 || row < 0 || column < 0 || plane > (numPlane - 1) || row > (numRow - 1) || column > (numColumn - 1)) {
+					System.out.println("Those are not valid coordinates.");
+					continue;
+				}
+				
+				System.out.println();
+				allyStatus = checkHit(plane, row, column, enemyGrid);
+				break;
+				
+			} while (true);
+		
+			// enemy turn
+			// reinitialize guesses
+			guessPlane = 0;
+			guessRow = 0;
+			guessColumn = 0;
+			
+			if (miss == 1 && hit == 1) {
+				// after finding direction continue in that direction
+				
+				if (checkEnemyDirection(hit1[0], hit1[1], hit1[2], enemyDirection, allyGrid)) {
+					newCoordinates(hit1, enemyDirection);
+					
+					guessPlane = hit1[0];
+					guessRow = hit1[1];
+					guessColumn = hit1[2];
+				}
+				else {
+					hit1[0] = hit0[0];
+					hit1[1] = hit0[1];
+					hit1[2] = hit0[2];
+					miss = 2;
+				}
+			}
+			
+			miss2:
+			if (miss == 2 && hit == 1) {
+				// after finding direction and missing, finding a spot that has already been hit, or going OOB
+				
+				if (guessDirection[1] == 1 && guessDirection[2] == 1 && guessDirection[3] == 1 && guessDirection[4] == 1) {
+					// all locations around the first hit have been searched
+					// exit loop and go back to random
+					hit = 0;
+					miss = 0;
+					break miss2;
+				}
+				
+				directionSwitch = 0;
+				switch (enemyDirection) {
+				case 1: 	if (guessDirection[3] == 0) {
+								guessDirection[3] = 1;
+								enemyDirection = 3;
+							}
+							else {
+								directionSwitch = 1;
+							}
+							break;
+				case 2:		if (guessDirection[4] == 0) {
+								guessDirection[4] = 1;
+								enemyDirection = 4;
+							}
+							else {
+								directionSwitch = 1;
+							}
+							break;
+				case 3:		if (guessDirection[1] == 0) {
+								guessDirection[1] = 1;
+								enemyDirection = 1;
+							}
+							else {
+								directionSwitch = 1;
+							}
+							break;
+				case 4:		if (guessDirection[2] == 0) {
+								guessDirection[2] = 1;
+								enemyDirection = 2;
+							}
+							else {
+								directionSwitch = 1;
+							}
+							break;
+				}
+				
+				if (directionSwitch == 0 && checkEnemyDirection(hit1[0], hit1[1], hit1[2], enemyDirection, allyGrid)) {
+					newCoordinates(hit1, enemyDirection);
+					
+					guessPlane = hit1[0];
+					guessRow = hit1[1];
+					guessColumn = hit1[2];
+				}
+				else {
+					miss = 0;
+				}
+				
+			}
+			
+			miss0:
+			if (miss == 0 && hit == 1) {
+				// first iteration(s) after initial hit
+				// randomize initial direction
+				
+				if (guessDirection[1] == 1 && guessDirection[2] == 1 && guessDirection[3] == 1 && guessDirection[4] == 1) {
+					// all locations around the first hit have been searched
+					// exit loop and go back to random
+					hit = 0;
+					miss = 0;
+					break miss0;
+				}
+				
+				enemyDirection = newDirection(guessDirection, hit1, allyGrid);
+				
+				if (enemyDirection == -1) {
+					hit = 0;
+					miss = 0;
+					break miss0;
+				}
+				
+				newCoordinates(hit1, enemyDirection);		
+				
+				guessPlane = hit1[0];
+				guessRow = hit1[1];
+				guessColumn = hit1[2];
+			}
+			
+			if (hit == 1) {
+
+				enemyStatus = randomGuess(guessPlane, guessRow, guessColumn, allyGrid);
+				// returns ship number if a hit, 0 if a miss
+				
+				if (enemyStatus == 0) {
+					miss = 2;
+					hit1[0] = hit0[0];
+					hit1[1] = hit0[1];
+					hit1[2] = hit0[2];
+				}
+				if (enemyStatus > 0) {
+					miss = 1;
+				}
+				
+			}
+			
+			if (hit == 0) {
+				// get a random integer between 1 and the number of remaining coordinates
+				enemyGuess = randomInt(1, (numPlane * numRow * numColumn - turn));
+				
+				// find the location of the random integer in the grid
+				// this is to keep the program from using the random number function an excessive number of times as the grid gets full
+				for (int i = 0; i < allyGrid.length; i++) {
+					for (int j = 0; j < allyGrid[i].length; j++) {
+						for (int k = 0; k < allyGrid[i][j].length; k++) {
+							if (allyGrid[i][j][k][2] == enemyGuess) {
+								guessPlane = i;
+								guessRow = j;
+								guessColumn = k;
+							}
+						}
+					}
+				}
+				
+				enemyStatus = randomGuess(guessPlane, guessRow, guessColumn, allyGrid);
+				
+				if (enemyStatus > 0) {
+					hit0[0] = guessPlane;
+					hit0[1] = guessRow;
+					hit0[2] = guessColumn;
+					hit1[0] = guessPlane;
+					hit1[1] = guessRow;
+					hit1[2] = guessColumn;
+					hit = 1;
+					miss = 0;
+				}
+			}
+			
+			
+			
+			printGrids(enemyGrid, allyGrid);
+			
+			// show results of turn
+			System.out.println("Turn: " + (turn + 1) + "   Ally Ships Sunk: " + allyShipsSunk + "   Enemy Ships Sunk: " + enemyShipsSunk);
+			
+			System.out.println("You attacked " + (plane + 1) + ", " + (row + 1) + ", " + (column + 1) + ".");
+			if (allyStatus == 0) {
+				System.out.println("You missed!");
+			}
+			else {
+				System.out.println("You hit an airship!");
+				if (shipHit(allyStatus, enemyShips[allyStatus - 1])) {
+					onSink(allyStatus, 1);
+					System.out.println("You sank " + enemyShipNames[allyStatus - 1] + "!");
+					enemyShipsSunk++;
+				}
+			}
+			
+			System.out.println("The enemy attacked " + (guessPlane + 1) + ", " + (guessRow + 1) + ", " + (guessColumn + 1) + ".");
+			if (enemyStatus == 0) {
+				System.out.println("The enemy missed!");
+			}
+			else {
+				System.out.println("The enemy hit " + allyShipNames[enemyStatus - 1] + "!");
+				onHit(enemyStatus);
+				if (shipHit(enemyStatus, allyShips[enemyStatus - 1])) {
+					onSink(enemyStatus, 0);
+					System.out.println("The enemy sank " + allyShipNames[enemyStatus - 1] + "!");
+					allyShipsSunk++;
+					initialize1DIntArray(hit0, 0);
+					initialize1DIntArray(hit1, 0);
+					initialize1DIntArray(guessDirection, 0);
+					hit = 0;
+					miss = 0;
+				}
+			}
+			
+			onRandom(allyShips, enemyShips);
+			
+			turn++;
+			
+		} while (allyShipsSunk < numAllyShips && enemyShipsSunk < numEnemyShips);
+		
+		if (allyShipsSunk == numAllyShips) {
+			System.out.println("You lost!");
+		}
+		else {
+			System.out.println("You won!");
+		}
+			
+	}
+	
+	public static boolean checkShip(int plane, int row, int column, int[][][][] grid) {
+		if (grid[plane][row][column][1] != 0) {
+			return false;
+		}
+		else {
+			return true;
+		}
+	}
+	
+	public static boolean checkDirection(int plane, int row, int column, int[][][][] grid, int direction, int shipLength) {
+		
+		for (int i = 1; i < shipLength; i++) {
+			switch (direction) {
+			case 1: row--; break;
+			case 2: column++; break;
+			case 3: row++; break;
+			case 4: column--; break;
+			}
+			if (row < 0 || column < 0 || row > (grid[plane].length -1) || column > (grid[plane][row].length - 1)) {
+				return false;
+			}
+			if (grid[plane][row][column][1] != 0 ) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	public static void placeShip(int plane, int row, int column, int[][][][] grid, int direction, int numShip, int shipLength) {
+		grid[plane][row][column][1] = numShip;
+		
+		for (int i = 1; i < shipLength; i++) {
+			
+			switch (direction) {
+			case 1: row--; break;
+			case 2: column++; break;
+			case 3: row++; break;
+			case 4: column--; break;
+			}
+			
+			grid[plane][row][column][1] = numShip;
+		}
+	}
+	
+	public static void randomPlaceShip(int[][][][] grid, int numShip, int shipLength) {
+		int plane = 0; int row = 0; int column = 0; int direction = 0;
+		
+		do {
+			plane = randomInt(0, (grid.length - 1));
+			row = randomInt(0, (grid[plane].length - 1));
+			column = randomInt(0, (grid[plane][row].length - 1));
+			
+			// if there is already a ship at the random location, restart the loop
+			if (checkShip(plane, row, column, grid) == false) { continue; }
+			
+			direction = randomInt(1, 4);
+			
+			// if there is a ship in the way or the ship will be out of bounds, restart the loop
+			if (checkDirection(plane, row, column, grid, direction, shipLength) == false) { continue; }
+			
+			// place enemy ship
+			placeShip(plane, row, column, grid, direction, numShip, shipLength);
+			break;
+			
+		} while (true);
+	}
+	
+	public static int checkHit(int plane, int row, int column, int[][][][] grid) {
+		if (grid[plane][row][column][1] > 0) {
+			grid[plane][row][column][0] = 2;
+			return grid[plane][row][column][1];
+		}
+		else {
+			grid[plane][row][column][0] = 1;
+			return 0;
+		}
+	}
+	
+	public static boolean shipHit(int numShip, int[] ship) {
+		
+		for (int i = 0; i < ship.length; i++) {
+			if (ship[i] == 0) {
+				ship[i] = 1;
+				if (i == (ship.length - 1)) {
+					return true;
+				}
+				else {
+					break;
+				}
+			}
+		}
+		return false;
+	}
+	
+	public static int randomGuess(int plane, int row, int column, int[][][][] grid) {
+		int numShip = 0;
+		
+		numShip = checkHit(plane, row, column, grid);
+		
+		grid[plane][row][column][2] = 0;
+		
+		// reinitializes grid with numbers 1 through total grid magnitude - turn #
+		// this is used to prevent excessive random number generation
+		int count = 1;
+		for (int i = 0; i < grid.length; i++) {
+			for (int j = 0; j < grid[i].length; j++) {
+				for (int k = 0; k < grid[i][j].length; k++) {
+					if (grid[i][j][k][2] != 0) {
+						grid[i][j][k][2] = count;
+						count++;
+					}
+				}
+			}
+		}
+		
+		return numShip;
+	}
+	
+	public static void newCoordinates(int[] coordinates, int direction) {
+
+		switch (direction) {
+		case 1: coordinates[1]--; break;
+		case 2: coordinates[2]++; break;
+		case 3: coordinates[1]++; break;
+		case 4: coordinates[2]--; break;
+		}
+
+	}
+	
+	public static int newDirection(int[] guessDirection, int[] hit1, int[][][][] grid) {
+		
+		int direction = 0;
+		int count = 0;
+		
+		do {
+			
+			do {
+				direction = randomInt(1,4);
+				if (guessDirection[direction] == 0) {
+					guessDirection[direction] = 1;
+					break;
+				}
+				count++;
+			} while (count < 25);
+			
+			if (count >= 25) {
+				return -1; // in case of infinite loop
+			}
+			
+			if (checkEnemyDirection(hit1[0], hit1[1], hit1[2], direction, grid)) {
+				break;
+			}
+			
+		} while(true);
+		
+		return direction;
+	}
+	
+	public static boolean checkEnemyDirection(int plane, int row, int column, int direction, int[][][][] grid) {
+		
+			switch (direction) {
+			case 1: row--; break;
+			case 2: column++; break;
+			case 3: row++; break;
+			case 4: column--; break;
+			}
+			
+			if (row < 0 || column < 0 || row > (grid[plane].length -1) || column > (grid[plane][row].length - 1)) {
+				return false;
+			}
+			
+			if (grid[plane][row][column][0] != 0 ) {
+				return false;
+			}
+		
+		return true;
+	}
+	
+	public static void printGrids(int[][][][] enemyGrid, int[][][][] allyGrid) {
+		
+		System.out.println("          Enemy             Ally\n");
+		
+		for (int i = (enemyGrid.length - 1); i >= 0; i--) {
+			
+			for (int j = 0; j < enemyGrid[i].length; j++) {
+				
+				if (j == 0) {
+					System.out.print("       ");
+					for (int k = 0; k < enemyGrid[i][j].length; k++) {
+						System.out.print(" " + (k + 1));
+					}
+					System.out.print("        ");
+					for (int k = 0; k < allyGrid[i][j].length; k++) {
+						System.out.print(" " + (k + 1));
+					}
+					System.out.println();
+				}
+				
+				if (j == enemyGrid[i].length / 2) {
+					System.out.print("  " + (i + 1) + "   " + (j + 1));
+				}
+				else {
+					System.out.print("      " + (j + 1));
+				}
+				
+				for (int k = 0; k < enemyGrid[i][j].length; k++) {
+					System.out.print("|" + getEnemyCharacter(enemyGrid[i][j][k][0]));
+					// the below is for debug purposes to see the number of the ship on the enemy grid
+					//System.out.print("|" + getAllyCharacter(enemyGrid[i][j][k][0], enemyGrid[i][j][k][1]));
+				}
+				System.out.print("|      " + (j + 1));
+				for (int k = 0; k < enemyGrid[i][j].length; k++) {
+					System.out.print("|" + getAllyCharacter(allyGrid[i][j][k][0], allyGrid[i][j][k][1]));
+				}
+				System.out.print("| \n");
+			}
+			System.out.println();
+		}
+	}
+	
+	public static void printGrid(int[][][][] grid) {
+		
+		for (int i = (grid.length - 1); i >= 0; i--) {
+			
+			for (int j = 0; j < grid[i].length; j++) {
+				
+				if (j == 0) {
+					System.out.print("       ");
+					for (int k = 0; k < grid[i][j].length; k++) {
+						System.out.print(" " + (k + 1));
+					}
+					System.out.println();
+				}
+				
+				if (j == grid[i].length / 2) {
+					System.out.print("  " + (i + 1) + "   " + (j + 1));
+				}
+				else {
+					System.out.print("      " + (j + 1));
+				}
+				
+				for (int k = 0; k < grid[i][j].length; k++) {
+					System.out.print("|" + getAllyCharacter(grid[i][j][k][0], grid[i][j][k][1]));
+				}
+				System.out.print("| \n");
+			}
+			System.out.println();
+		}
+	}
+	
+	public static char getEnemyCharacter(int value) {
+		switch (value) {
+		case 0: return ' '; // coordinate has not been attacked
+		case 1: return 'O'; // coordinate has been attacked but was a miss
+		case 2: return 'X'; // coordinate has been attacked and hit a ship
+		default: return ' '; // should not be needed
+		}
+	}
+	
+	public static char getAllyCharacter(int value, int numShip) {
+		switch (value) {
+		case 0: if (numShip == 0) { 
+			  		return ' ';
+			  	}
+				else {
+					return Integer.toString(numShip).charAt(0);
+				} // returns the number of the ship if it has not been attacked
+		case 1: return 'O'; // coordinate has been attacked but was a miss
+		case 2: return 'X'; // coordinate has been attacked and hit a ship
+		default: return ' '; // should not be needed
+		}
+	}
+	
+	public static void onRandom(int[][] allyShips, int[][] enemyShips) {
+		int value = randomInt(1, 25);
+		
+		switch (value) {
+		case 1:		// Lunar Whale
+					if (allyShips[0][allyShips[0].length - 1] - 1 == 1) {
+						break;
+					}
+					else {
+						System.out.println("Cecil: \"Damnation!\"");
+					}
+					break;
+		case 2:		// Blackjack
+					if (allyShips[1][allyShips[1].length - 1] - 1 == 1) {
+						break;
+					}
+					else {
+						System.out.println("Locke: \"I think I'm gonna...\"");
+						System.out.println("Locke: [runs to the side of the airship]");
+						System.out.println("Locke: \"Not a word of this to anyone.\"");
+					}
+					break;
+		case 3:		// Hilda Garde III
+					if (allyShips[2][allyShips[2].length - 1] == 1) {
+						break;
+					}
+					else {
+						System.out.println("Vivi: \"I won't let you make any more instruments of murder!\"");
+					}
+					break;
+		case 4:		// Celsius
+					if (allyShips[3][allyShips[3].length - 1] == 1) {
+						break;
+					}
+					else {
+						System.out.println("Yuna: \"Gimme a Y!\"");
+						System.out.println("Rikkku: \"Gimme an R!\"");
+						System.out.println("Paine: \"Gimme a break.\"");
+					}
+					break;
+		case 5:		// Cid's Airship
+					if (allyShips[4][allyShips[4].length - 1] == 1) {
+						break;
+					}
+					else {
+						System.out.println("Cid: \"Nothing can beat my beauty!\"");
+					}
+					break;
+		case 6:		// Sky Fortress Bahamut
+					if (enemyShips[0][enemyShips[0].length - 1] == 1) {
+						break;
+					}
+					else {
+						System.out.println("Vayne: \"Your lives are forfeit, and your insurgence with them.\"");
+						System.out.println("       \"For good and all, I shall bring your futile attempts at rebellion to an end.\"");
+					}
+					break;
+		case 7:		// Dreadnaught
+					if (enemyShips[1][enemyShips[1].length - 1] == 1) {
+						break;
+					}
+					else {
+						System.out.println("Dark Knight: \"Give up. You stand no chance against the emperor.\"");
+					}
+					break;
+		case 8:		// Invincible
+					if (enemyShips[2][enemyShips[2].length - 1] == 1) {
+						break;
+					}
+					else {
+						System.out.println("Kuja: \"Yes! This is the power I've longed for!!!\"");
+					}
+					break;
+		case 9:		// Red Rose
+					if (enemyShips[3][enemyShips[3].length - 1] == 1) {
+						break;
+					}
+					else {
+						System.out.println("Brahne: \"Fire! Fire at will!!!\"");
+					}
+					break;
+		case 10:	// Galbadia Garden
+					if (enemyShips[4][enemyShips[4].length - 1] == 1) {
+						break;
+					}
+					else {
+						System.out.println("Sorceress Edea: \"Your life ends here, SeeD.\"");
+					}
+					break;
+		default: ;
+		}
+	}
+	
+	public static void onHit(int numShip) {
+		int value = randomInt(0, 5);
+		
+		switch (numShip) {
+		case 1:		// Lunar Whale
+					if (value == 0) {
+						System.out.println("Kain: \"Confident bastard, aren't you?\"");
+					}
+					break;
+		case 2:		// Blackjack
+					if (value == 0) {
+						System.out.println("Edgar: \"If something were to happen to me, all the world's women would grieve!\"");
+					}
+					break;
+		case 3:		// Hilda Garde III
+					if (value == 0) {
+						System.out.println("Steiner: \"Bah! Only a flesh wound.\"");
+					}
+					break;
+		case 4:		// Celsius
+					if (value == 0) {
+						System.out.println("Rikku: \"Oh, poopie!\"");
+					}
+					else if (value == 1) {
+						System.out.println("Rikku: \"Can we not almost die next time?\"");
+					}
+					break;
+		case 5:		// Cid's Airship
+					if (value == 0) {
+						System.out.println("Firion: \"Let\'s get out of here!\"");
+					}
+					break;
+		}
+		
+	}
+	
+	public static void onSink(int numShip, int alignment) {
+		
+		// ship is an ally ship
+		if (alignment == 0) {
+			switch (numShip) {
+			case 1:		// Lunar Whale
+						System.out.println("Tellah: \"You spoony bard!\"");
+						break;
+			case 2:		// Blackjack
+						System.out.println("Setzer: \"When things fall, they fall...\"");
+						System.out.println("        \"Life's a game of chance. You play your cards, and Fate plays hers...\"");
+						break;
+			case 3:		// Hilda Garde III
+						System.out.println("Freya: \"We live not to forget our past, but to learn from it.\"");
+						break;
+			case 4:		// Celsius
+						System.out.println("Yuna: \"Disasterriffic...\"");
+						break;
+			case 5:		// Cid's Airship
+						System.out.println("Minwu: \"All those who live must some day die. It is our fate.\"");
+						break;
+			}
+		}
+		
+		// ship is an enemy ship
+		else {
+			switch (numShip) {
+			case 1:		// Sky Fortress Bahamut
+						System.out.println("Vayne: \"History begins anew.\"");
+						break;
+			case 2:		// Dreadnaught
+						System.out.println("Dark Knight: \"Don\'t think you've won just yet!\"");
+						break;
+			case 3:		// Invincible
+						System.out.println("Kuja: \"...I don\'t deserve to live after all that I\'ve done.\"");
+						System.out.println("      \"I\'m useless to this world.\"");
+						break;
+			case 4:		// Red Rose
+						System.out.println("Beatrix: \"...There\'s no difference between them and me. We\'re all just blindly following orders.\"");
+						System.out.println("         \"My heart and my will mean nothing... Maybe Steiner was right...\"");
+						break;
+			case 5:		// Galbadia Garden
+						System.out.println("Seifer: \"This can't be! Why!?\"");
+						break;
+			}
+		}
+	}
+	
+	public static void initialize4DIntArray(int[][][][] grid, int value) {
+		for (int i = 0; i < grid.length; i++) {
+			for (int j = 0; j < grid[i].length; j++) {
+				for (int k = 0; k < grid[i][j].length; k++) {
+					for (int l = 0; l < grid[i][j][k].length; l++) {
+						grid[i][j][k][l] = value;
+					}
+				}
+			}
+		}
+	}
+	
+	public static void initialize2DIntArray(int[][] grid, int value) {
+		for (int i = 0; i < grid.length; i++) {
+			for (int j = 0; j < grid[i].length; j++) {
+				grid[i][j] = value;
+			}
+		}
+	}
+	
+	public static void initialize1DIntArray(int[] grid, int value) {
+		for (int i = 0; i < grid.length; i++) {
+			grid[i] = value;
+		}
+	}
+	
+	public static int randomInt(int min, int max) {
+	    Random rand = new Random();
+	    int randomNum = rand.nextInt((max - min) + 1) + min;
+	    return randomNum;
+	}
+
+}
